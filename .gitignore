@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment (.env.example only)
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Claude
+.claude/
+CLAUDE.md
+
+# Database
+*.db
+*.db-journal
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# Model files
+models/
+
+# RAG data
+data/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Test / Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# Poetry
+poetry.lock
+
+# Misc
+*.bak
+*.tmp
+*.temp

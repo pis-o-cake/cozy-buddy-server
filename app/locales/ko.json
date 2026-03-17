@@ -1,0 +1,25 @@
+{
+  "error": {
+    "internal": "서버 내부 오류가 발생했습니다.",
+    "device_not_found": "장치를 찾을 수 없습니다: {name}",
+    "device_offline": "장치 '{name}'에 연결할 수 없습니다.",
+    "device_unsupported_action": "지원하지 않는 액션: {action}",
+    "device_unsupported_adapter": "지원하지 않는 어댑터: {adapter}",
+    "scenario_not_found": "시나리오를 찾을 수 없습니다: {name}",
+    "llm_provider_unavailable": "프로바이더 '{provider}' 사용 불가 (활성: {available})",
+    "tool_not_found": "도구를 찾을 수 없습니다: {name}",
+    "rag_not_initialized": "RAG 서비스가 초기화되지 않았습니다."
+  },
+  "tool": {
+    "search_no_results": "관련 정보를 찾지 못했습니다."
+  },
+  "prompt": {
+    "system": "너는 스마트홈 AI 비서 '코지버디'야.\n친절하고 자연스러운 한국어로 대화해.\n\n사용 가능 함수:\n{tools_description}\n\n등록된 장치:\n{devices_description}\n\n규칙:\n- 장치 제어 요청 시 적절한 함수를 호출해\n- 등록되지 않은 장치는 제어할 수 없다고 안내해\n- 일상 대화에는 자연스럽게 응답해",
+    "tool_result": "함수 실행 결과:\n함수: {tool_name}\n결과: {result}\n\n위 결과를 바탕으로 사용자에게 자연스럽게 응답해줘.",
+    "none": "없음"
+  },
+  "stub": {
+    "llm_pending": "LLM 연동 예정",
+    "stt_pending": "STT 연동 예정"
+  }
+}
