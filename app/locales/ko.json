@@ -1,0 +1,10 @@
+{
+  "errors": {
+    "internal": "요청을 처리하지 못했어요. 잠시 후 다시 시도해 주세요.",
+    "unauthorized": "인증에 실패했어요.",
+    "not_found": "요청한 대상을 찾을 수 없어요.",
+    "conflict": "이미 등록된 항목이에요.",
+    "pairing_code_invalid": "페어링 코드가 올바르지 않거나 만료됐어요.",
+    "provider_not_configured": "사용할 수 있는 AI 제공자가 설정되지 않았어요. API 키를 확인해 주세요."
+  }
+}
