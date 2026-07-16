@@ -109,39 +109,53 @@
   .info .weather svg { width: 2.6cqi; height: 2.6cqi; display: block; }
   .info .weather .indoor { opacity: .75; margin-left: 0.6cqi; }
 
-  /* 풀스크린 시계 모드: 중앙 대형 */
+  /* 시계 모드 (1세대 스타일): 검은 배경 + 중앙 대형 디지털 시계 */
+  .darkbg {
+    position: absolute; inset: 0; background: #000;
+    opacity: 0; transition: opacity 1.1s ease;
+  }
   .clockface {
     position: absolute; inset: 0;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     opacity: 0; pointer-events: none; transition: opacity 1.1s ease;
-    text-shadow: 0 0.3cqi 2.4cqi rgba(0,0,0,.3);
   }
   .clockface .time {
-    font-size: 18cqi; font-weight: 200; line-height: 1;
-    letter-spacing: -0.015em; font-variant-numeric: tabular-nums;
+    font-size: 17.5cqi; font-weight: 200; line-height: 1;
+    letter-spacing: -0.01em; font-variant-numeric: tabular-nums;
+    opacity: .94;
   }
-  .clockface .date { margin-top: 1.4cqi; font-size: 2.5cqi; }
+  .clockface .date { margin-top: 1.5cqi; font-size: 2.3cqi; font-weight: 400; opacity: .55; }
+  .clockface .weather {
+    display: flex; align-items: center; gap: 0.8cqi;
+    margin-top: 1cqi; font-size: 2cqi; opacity: .45;
+  }
+  .clockface .weather svg { width: 2.3cqi; height: 2.3cqi; display: block; }
 
   /* 모드 전환 규칙 */
+  .screen.is-clock .photo,
+  .screen.is-clock .vignette,
   .screen.is-clock .info { opacity: 0; }
+  .screen.is-clock .darkbg { opacity: 1; }
   .screen.is-clock .clockface { opacity: 1; }
-  .screen.is-night .photo { opacity: 0; }
-  .screen.is-night .vignette { opacity: 0; }
+
+  .screen.is-night .photo,
+  .screen.is-night .vignette,
   .screen.is-night .info { opacity: 0; }
-  .screen.is-night .clockface { opacity: 1; text-shadow: none; }
+  .screen.is-night .clockface { opacity: 1; }
+  .screen.is-night .clockface .weather { opacity: 0; }  /* 야간: 시계만 (§10-4) */
 </style>
 
 <div class="stage">
   <div class="stage-head">
     <h1>Cozy Buddy · 앰비언트 <small>1280 × 800 — 설계서 §2-3 · §10-5</small></h1>
     <div class="mode-switch" role="group" aria-label="화면 모드">
-      <button id="btn-photo" aria-pressed="true">포토 프레임</button>
-      <button id="btn-clock" aria-pressed="false">풀스크린 시계</button>
+      <button id="btn-clock" aria-pressed="true">시계 (1세대 스타일)</button>
+      <button id="btn-photo" aria-pressed="false">포토 프레임</button>
       <button id="btn-night" aria-pressed="false">야간 디밍</button>
     </div>
   </div>
 
-  <div class="screen" id="screen">
+  <div class="screen is-clock" id="screen">
     <div class="photo">
       <div class="haze"></div>
       <!-- 산 능선 실루엣 (사진 자리표시) -->
@@ -155,6 +169,7 @@
       </svg>
     </div>
     <div class="vignette"></div>
+    <div class="darkbg"></div>
     <div class="night"></div>
 
     <div class="statusbar ink" aria-hidden="true">
@@ -182,19 +197,26 @@
       </div>
     </div>
 
-    <!-- 풀스크린 시계 모드 -->
+    <!-- 시계 모드 (1세대 스타일 — 검은 배경 중앙 대형) -->
     <div class="clockface ink">
       <div class="time js-time">7:42</div>
       <div class="date js-date">7월 16일 수요일</div>
+      <div class="weather">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <circle cx="11" cy="11" r="4"/>
+          <path d="M11 2.5v2M11 17.5v2M2.5 11h2M17.5 11h2M5 5l1.4 1.4M16.6 16.6 18 18M18 4 16.6 5.4M5.4 16.6 4 18"/>
+        </svg>
+        <span>23°</span>
+      </div>
     </div>
   </div>
 
   <p class="stage-note">
-    <b>포토 프레임(기본)</b>: Nest Hub 홈 화면 레이아웃 — 좌하단에 날짜·시계·날씨 스택,
-    배경은 전면 사진(목업에선 CSS 풍경 자리표시, 실제 앱은 로컬/NAS 사진 슬라이드쇼 — §2-3).
-    하단 비네트는 사진 위 텍스트 가독성용. <b>풀스크린 시계</b>: Nest Hub의 시계 페이스 모드.
-    <b>야간 디밍</b>: 조도/시간 기반 초저휘도 — 사진 소등, 시계만 웜 그레이(§10-4 번인 대책).
-    시계는 실시간입니다.
+    <b>시계(기본)</b>: Nest Hub 1세대 감성 — 검은 배경에 초경량 디지털 시계 중앙 배치,
+    아래로 날짜·날씨를 낮은 명도로. <b>포토 프레임</b>: 2세대 홈 화면 레이아웃 — 좌하단
+    날짜·시계·날씨 스택 + 전면 사진(목업은 CSS 풍경 자리표시, 실제 앱은 로컬/NAS 사진 — §2-3).
+    <b>야간 디밍</b>: 시계 모드에서 한 단계 더 — 날씨도 끄고 시계만 저휘도 웜 그레이
+    (§10-4 번인 대책). 시계는 실시간입니다.
   </p>
 </div>
 
