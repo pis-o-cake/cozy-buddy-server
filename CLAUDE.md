@@ -1,6 +1,6 @@
 # Cozy Buddy Server
 
-자가호스팅 스마트홈 음성 AI 비서 서버. **설계서 `cozy-buddy-design-v3.md`(워크스페이스 `../docs/`)가 아키텍처·프로토콜·정책의 단일 진실원본** — 구현 전 해당 섹션을 먼저 확인한다.
+자가호스팅 스마트홈 음성 AI 비서 서버. **설계서 [`docs/cozy-buddy-design-v3.md`](docs/cozy-buddy-design-v3.md)가 아키텍처·프로토콜·정책의 단일 진실원본** — 구현 전 해당 섹션을 먼저 확인한다. 기능 명세는 `docs/cozy-buddy-feature-spec.md`, 기술 선정 근거는 `docs/research/`.
 
 ## Git
 - **커밋 메시지는 전부 영어로 작성한다** (subject·body 모두. 한국어 금지).
