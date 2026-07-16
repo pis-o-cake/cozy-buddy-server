@@ -95,28 +95,32 @@
   /* ── 시계 모드: 스플릿-플랩(Flip) 카드 ─────────────────────── */
   .clockface {
     position: absolute; inset: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
     opacity: 0; pointer-events: none; transition: opacity 1.1s ease;
   }
-  .flipclock { display: flex; align-items: center; gap: 1.7cqi; }
+  /* 시계는 화면 정중앙 고정 */
+  .flipclock {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    display: flex; align-items: center; gap: 1.7cqi;
+  }
   .screen.is-night .flipclock { filter: brightness(.45); }
 
   .fd { position: relative; width: 16cqi; height: 25cqi; perspective: 70cqi; }
   .fd-half, .fd-flap {
     position: absolute; left: 0; right: 0; height: 50%; overflow: hidden;
   }
+  /* 중립 다크 그레이 — 배경(순흑)과 같은 색 온도, 푸른 기 제거 */
   .fd-half.top, .fd-flap.top {
     top: 0; border-radius: 2.4cqi 2.4cqi 0.5cqi 0.5cqi;
-    background: linear-gradient(#26272c, #1e1f24);
+    background: linear-gradient(#242424, #1d1d1d);
   }
   .fd-half.bottom, .fd-flap.bottom {
     top: 50%; border-radius: 0.5cqi 0.5cqi 2.4cqi 2.4cqi;
-    background: linear-gradient(#1a1b20, #16171b);
+    background: linear-gradient(#181818, #141414);
   }
   .fd span {
     position: absolute; left: 0; width: 100%; height: 200%;
     display: grid; place-items: center;
-    font-size: 18cqi; font-weight: 500; color: #f2f1ed;
+    font-size: 18cqi; font-weight: 500; color: #f4f4f2;
     font-variant-numeric: tabular-nums; line-height: 1;
   }
   .fd-half.top span, .fd-flap.top span { top: 0; }
@@ -126,19 +130,25 @@
   .fd-flap.bottom { transform-origin: 50% 0%; transform: rotateX(90deg); }
   .fd-seam {
     position: absolute; top: 50%; left: 0; right: 0; height: 0.35cqi; z-index: 4;
-    transform: translateY(-50%); background: rgba(0,0,0,.6);
+    transform: translateY(-50%); background: rgba(0,0,0,.65);
   }
 
   .colon { display: flex; flex-direction: column; gap: 3.4cqi; margin: 0 0.6cqi; }
-  .colon i { width: 1.5cqi; height: 1.5cqi; border-radius: 50%; background: #45464c; display: block; }
-  .screen.is-night .colon i { background: #2a2b2f; }
+  .colon i { width: 1.5cqi; height: 1.5cqi; border-radius: 50%; background: #3a3a3a; display: block; }
+  .screen.is-night .colon i { background: #242424; }
 
-  .clockface .date { margin-top: 2.6cqi; font-size: 2.5cqi; font-weight: 400; opacity: .55; }
-  .clockface .weather {
-    display: flex; align-items: center; gap: 0.8cqi;
-    margin-top: 1cqi; font-size: 2cqi; opacity: .45; transition: opacity 1.1s ease;
+  /* 날짜 · 요일 · 온도 — 하단 중앙 한 줄 */
+  .clockbottom {
+    position: absolute; left: 0; right: 0; bottom: 3.4cqi;
+    display: flex; align-items: center; justify-content: center; gap: 1.2cqi;
+    font-size: 2.3cqi; font-weight: 400; opacity: .6;
   }
-  .clockface .weather svg { width: 2.3cqi; height: 2.3cqi; display: block; }
+  .clockbottom .sep { opacity: .5; }
+  .clockbottom .weather { display: inline-flex; align-items: center; gap: 0.7cqi; }
+  .clockbottom .weather svg { width: 2.4cqi; height: 2.4cqi; display: block; }
+  .screen.is-night .clockbottom { opacity: .35; }
+  .screen.is-night .clockbottom .sep,
+  .screen.is-night .clockbottom .weather { display: none; }  /* 야간: 날짜만 (§10-4) */
 
   /* ── 모드 전환 규칙 ────────────────────────────────────────── */
   .screen.is-clock .photo, .screen.is-clock .vignette, .screen.is-clock .info { opacity: 0; }
@@ -201,18 +211,21 @@
       </div>
     </div>
 
-    <!-- 플립 시계 (Nest Hub "Flip" 페이스 다크 변형) -->
+    <!-- 플립 시계 (스플릿-플랩 카드, 다크) -->
     <div class="clockface ink">
       <div class="flipclock" id="flipclock" aria-label="현재 시각">
         <!-- 숫자 카드는 JS가 생성 -->
       </div>
-      <div class="date js-date">7월 16일 수요일</div>
-      <div class="weather">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-          <circle cx="11" cy="11" r="4"/>
-          <path d="M11 2.5v2M11 17.5v2M2.5 11h2M17.5 11h2M5 5l1.4 1.4M16.6 16.6 18 18M18 4 16.6 5.4M5.4 16.6 4 18"/>
-        </svg>
-        <span>23°</span>
+      <div class="clockbottom">
+        <span class="js-date">7월 16일 수요일</span>
+        <span class="sep">·</span>
+        <span class="weather">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="11" cy="11" r="4"/>
+            <path d="M11 2.5v2M11 17.5v2M2.5 11h2M17.5 11h2M5 5l1.4 1.4M16.6 16.6 18 18M18 4 16.6 5.4M5.4 16.6 4 18"/>
+          </svg>
+          <span>23°</span>
+        </span>
       </div>
     </div>
   </div>
