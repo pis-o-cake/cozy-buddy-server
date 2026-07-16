@@ -43,3 +43,16 @@ async def get_session() -> AsyncIterator[AsyncSession]:
     """FastAPI `Depends()`용 세션 의존성. 요청 단위로 열고 닫는다."""
     async with get_session_factory()() as session:
         yield session
+
+
+def override_session_factory(factory: async_sessionmaker[AsyncSession] | None) -> None:
+    """테스트 전용 — REST(Depends)·WS(직접 호출) 양쪽의 세션 출처를 교체한다."""
+    global _session_factory
+    _session_factory = factory
+
+
+def reset_database_state() -> None:
+    """테스트 전용 — 엔진·팩토리 캐시를 버려 다음 사용 시 현재 설정으로 재생성한다."""
+    global _engine, _session_factory
+    _engine = None
+    _session_factory = None

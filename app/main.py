@@ -20,20 +20,27 @@ from app.middleware.error_handler import register_exception_handlers
 from app.middleware.request_logger import register_request_logger
 
 
+def _import_domain_module(name: str):
+    try:
+        return importlib.import_module(name)
+    except ModuleNotFoundError as exc:
+        if exc.name == name:  # 해당 모듈이 없는 도메인은 스킵
+            return None
+        raise
+
+
 def _register_domain_routers(app: FastAPI) -> None:
     for module_info in pkgutil.iter_modules(domain.__path__):
-        module_name = f"app.domain.{module_info.name}.api"
-        try:
-            module = importlib.import_module(module_name)
-        except ModuleNotFoundError as exc:
-            if exc.name == module_name:  # api.py 없는 도메인(모델 전용)은 스킵
-                continue
-            raise
-        router = getattr(module, "router", None)
-        if router is None:
-            continue
-        app.include_router(router, prefix=f"/api/{module_info.name}")
-        logger.info("router mounted: /api/{}", module_info.name)
+        # REST: domain/<name>/api.py → /api/<name> 프리픽스
+        module = _import_domain_module(f"app.domain.{module_info.name}.api")
+        if module is not None and getattr(module, "router", None) is not None:
+            app.include_router(module.router, prefix=f"/api/{module_info.name}")
+            logger.info("router mounted: /api/{}", module_info.name)
+        # WS: domain/<name>/ws.py → 프리픽스 없음 (경로는 모듈이 소유 — §5 /ws/hub)
+        ws_module = _import_domain_module(f"app.domain.{module_info.name}.ws")
+        if ws_module is not None and getattr(ws_module, "router", None) is not None:
+            app.include_router(ws_module.router)
+            logger.info("ws router mounted: {}", module_info.name)
 
 
 @asynccontextmanager

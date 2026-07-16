@@ -9,6 +9,7 @@ import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
+import tests.fakes  # noqa: F401 — fake provider 등록
 from app.config import Settings
 from app.core.database import Base, get_session
 from app.core.models_loader import import_all_models

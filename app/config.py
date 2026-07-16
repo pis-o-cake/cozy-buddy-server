@@ -33,11 +33,14 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     llamacpp_base_url: str = "http://127.0.0.1:8080/v1"  # Phase 4+ 로컬 슬롯
 
-    # ── Voice (§3-3 — 구현체는 Phase 1) ──
+    # ── Voice (§3-3) ──
     stt_provider: str = "faster-whisper"
     stt_model: str = "large-v3-turbo"
     stt_compute_type: str = "float16"
+    stt_confidence_threshold: float = 0.35  # 미달 시 되묻기 (§12-1)
     tts_provider: str = "supertonic"
+    tts_voice: str = "M1"
+    llm_first_token_timeout_seconds: float = 10.0  # LLM 타임아웃 → 폴백 응답 (§12-1)
 
     # ── IoT (§8-1 — 구현은 Phase 2) ──
     iot_adapters: str = "kasa,matter"
