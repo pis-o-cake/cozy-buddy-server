@@ -1,6 +1,6 @@
 <title>Cozy Buddy — 허브 앰비언트 목업</title>
 <style>
-  /* ── 프레젠테이션 스테이지 (목업 프레임 바깥) ─────────────── */
+  /* ── 프레젠테이션 스테이지 ────────────────────────────────── */
   :root {
     --stage-bg: #101318;
     --stage-ink: #b8bec8;
@@ -12,11 +12,8 @@
     margin: 0;
     font-family: "Segoe UI", Roboto, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
     color: var(--stage-ink);
-    display: grid;
-    place-items: center;
-    min-height: 100vh;
-    padding: 32px 16px;
-    box-sizing: border-box;
+    display: grid; place-items: center;
+    min-height: 100vh; padding: 32px 16px; box-sizing: border-box;
   }
   .stage { width: min(100%, 1100px); }
   .stage-head {
@@ -24,38 +21,33 @@
     gap: 16px; margin-bottom: 14px; flex-wrap: wrap;
   }
   .stage-head h1 {
-    font-size: 15px; font-weight: 600; letter-spacing: 0.02em; margin: 0;
-    color: var(--stage-ink);
+    font-size: 15px; font-weight: 600; letter-spacing: 0.02em; margin: 0; color: var(--stage-ink);
   }
   .stage-head h1 small { color: var(--stage-ink-dim); font-weight: 400; margin-left: 8px; }
   .mode-switch { display: flex; gap: 6px; }
   .mode-switch button {
     font: inherit; font-size: 12.5px; padding: 6px 14px; border-radius: 999px;
-    border: 1px solid #2a3038; background: transparent; color: var(--stage-ink-dim);
-    cursor: pointer;
+    border: 1px solid #2a3038; background: transparent; color: var(--stage-ink-dim); cursor: pointer;
   }
   .mode-switch button[aria-pressed="true"] {
     background: #1c2129; color: var(--stage-ink); border-color: #3a424d;
   }
   .mode-switch button:focus-visible { outline: 2px solid var(--stage-accent); outline-offset: 2px; }
   .stage-note {
-    margin-top: 14px; font-size: 12.5px; line-height: 1.7; color: var(--stage-ink-dim);
-    max-width: 70ch;
+    margin-top: 14px; font-size: 12.5px; line-height: 1.7; color: var(--stage-ink-dim); max-width: 70ch;
   }
   .stage-note b { color: var(--stage-ink); font-weight: 600; }
 
-  /* ── 태블릿 스크린 (1280×800, cqi 단위 스케일) ────────────── */
+  /* ── 태블릿 스크린 (1280×800) ─────────────────────────────── */
   .screen {
     container-type: inline-size;
     aspect-ratio: 1280 / 800;
-    border-radius: 18px;
-    overflow: hidden;
-    position: relative;
+    border-radius: 18px; overflow: hidden; position: relative;
     box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 1px #262c34;
-    user-select: none;
+    user-select: none; cursor: pointer;
   }
 
-  /* ── 배경: 사진 자리표시 풍경 (실제 앱 = 로컬 사진 슬라이드쇼) ── */
+  /* 포토 프레임 배경 (사진 자리표시) */
   .photo {
     position: absolute; inset: 0;
     background:
@@ -64,83 +56,97 @@
     transition: opacity 1.1s ease;
   }
   .photo svg { position: absolute; inset: auto 0 0 0; width: 100%; height: 46%; display: block; }
-  .haze {
-    position: absolute; left: 0; right: 0; bottom: 34%;
-    height: 12%; background: rgba(255,214,170,.35); filter: blur(28px);
-  }
-
-  /* 가독성용 하단 비네트 — 사진 위 텍스트의 생명줄 */
+  .haze { position: absolute; left: 0; right: 0; bottom: 34%; height: 12%;
+          background: rgba(255,214,170,.35); filter: blur(28px); }
   .vignette {
     position: absolute; inset: 0;
     background: linear-gradient(180deg, rgba(10,12,20,.22) 0%, rgba(10,12,20,0) 22%,
                 rgba(10,12,20,0) 55%, rgba(10,12,20,.42) 100%);
+    transition: opacity 1.1s ease;
   }
 
-  /* 야간 디밍 (설계서 §2-3 · §10-4) */
-  .night { position: absolute; inset: 0; background: #07090c; opacity: 0; transition: opacity 1.1s ease; }
-  .screen.is-night .night { opacity: 1; }
+  /* 시계/야간 공용 검은 배경 */
+  .darkbg { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity 1.1s ease; }
 
-  /* ── 콘텐츠 ───────────────────────────────────────────────── */
   .ink { color: #fff; transition: color 1.1s ease, opacity 1.1s ease; }
-  .screen.is-night .ink { color: #9a938a; }
+  .screen.is-night .ink { color: #97907f; }
 
-  .statusbar {
-    position: absolute; top: 2.2cqi; right: 2.6cqi;
-    display: flex; gap: 1.4cqi; opacity: .65;
-  }
+  .statusbar { position: absolute; top: 2.2cqi; right: 2.6cqi; display: flex; gap: 1.4cqi; opacity: .6; z-index: 6; }
   .statusbar svg { width: 1.7cqi; height: 1.7cqi; display: block; }
-  .screen.is-night .statusbar { opacity: .3; }
+  .screen.is-night .statusbar { opacity: .25; }
 
-  /* 포토 프레임 모드: 좌하단 스택 — 날짜(위) · 시계 · 날씨 */
+  /* ── 포토 프레임: 좌하단 정보 스택 ─────────────────────────── */
   .info {
     position: absolute; left: 3.4cqi; bottom: 3cqi;
     display: flex; flex-direction: column; gap: 0.4cqi;
     text-shadow: 0 0.15cqi 1.6cqi rgba(0,0,0,.45);
+    transition: opacity 1.1s ease;
   }
   .info .date { font-size: 2.2cqi; font-weight: 400; opacity: .95; }
   .info .time {
     font-size: 9.5cqi; font-weight: 300; line-height: 1.02;
     letter-spacing: -0.01em; font-variant-numeric: tabular-nums;
   }
-  .info .weather {
-    display: flex; align-items: center; gap: 0.9cqi;
-    font-size: 2.2cqi; font-weight: 400; opacity: .95; margin-top: 0.5cqi;
-  }
+  .info .weather { display: flex; align-items: center; gap: 0.9cqi;
+                   font-size: 2.2cqi; opacity: .95; margin-top: 0.5cqi; }
   .info .weather svg { width: 2.6cqi; height: 2.6cqi; display: block; }
   .info .weather .indoor { opacity: .75; margin-left: 0.6cqi; }
 
-  /* 시계 모드 (1세대 스타일): 검은 배경 + 중앙 대형 디지털 시계 */
-  .darkbg {
-    position: absolute; inset: 0; background: #000;
-    opacity: 0; transition: opacity 1.1s ease;
-  }
+  /* ── 시계 모드: 스플릿-플랩(Flip) 카드 ─────────────────────── */
   .clockface {
     position: absolute; inset: 0;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     opacity: 0; pointer-events: none; transition: opacity 1.1s ease;
   }
-  .clockface .time {
-    font-size: 26cqi; font-weight: 350; line-height: 1;
-    letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
-    opacity: .96;
+  .flipclock { display: flex; align-items: center; gap: 1.7cqi; }
+  .screen.is-night .flipclock { filter: brightness(.45); }
+
+  .fd { position: relative; width: 16cqi; height: 25cqi; perspective: 70cqi; }
+  .fd-half, .fd-flap {
+    position: absolute; left: 0; right: 0; height: 50%; overflow: hidden;
   }
-  .clockface .date { margin-top: 1.6cqi; font-size: 2.5cqi; font-weight: 400; opacity: .55; }
+  .fd-half.top, .fd-flap.top {
+    top: 0; border-radius: 2.4cqi 2.4cqi 0.5cqi 0.5cqi;
+    background: linear-gradient(#26272c, #1e1f24);
+  }
+  .fd-half.bottom, .fd-flap.bottom {
+    top: 50%; border-radius: 0.5cqi 0.5cqi 2.4cqi 2.4cqi;
+    background: linear-gradient(#1a1b20, #16171b);
+  }
+  .fd span {
+    position: absolute; left: 0; width: 100%; height: 200%;
+    display: grid; place-items: center;
+    font-size: 18cqi; font-weight: 500; color: #f2f1ed;
+    font-variant-numeric: tabular-nums; line-height: 1;
+  }
+  .fd-half.top span, .fd-flap.top span { top: 0; }
+  .fd-half.bottom span, .fd-flap.bottom span { top: -100%; }
+  .fd-flap { z-index: 3; backface-visibility: hidden; will-change: transform; }
+  .fd-flap.top { transform-origin: 50% 100%; }
+  .fd-flap.bottom { transform-origin: 50% 0%; transform: rotateX(90deg); }
+  .fd-seam {
+    position: absolute; top: 50%; left: 0; right: 0; height: 0.35cqi; z-index: 4;
+    transform: translateY(-50%); background: rgba(0,0,0,.6);
+  }
+
+  .colon { display: flex; flex-direction: column; gap: 3.4cqi; margin: 0 0.6cqi; }
+  .colon i { width: 1.5cqi; height: 1.5cqi; border-radius: 50%; background: #45464c; display: block; }
+  .screen.is-night .colon i { background: #2a2b2f; }
+
+  .clockface .date { margin-top: 2.6cqi; font-size: 2.5cqi; font-weight: 400; opacity: .55; }
   .clockface .weather {
     display: flex; align-items: center; gap: 0.8cqi;
-    margin-top: 1cqi; font-size: 2cqi; opacity: .45;
+    margin-top: 1cqi; font-size: 2cqi; opacity: .45; transition: opacity 1.1s ease;
   }
   .clockface .weather svg { width: 2.3cqi; height: 2.3cqi; display: block; }
 
-  /* 모드 전환 규칙 */
-  .screen.is-clock .photo,
-  .screen.is-clock .vignette,
-  .screen.is-clock .info { opacity: 0; }
+  /* ── 모드 전환 규칙 ────────────────────────────────────────── */
+  .screen.is-clock .photo, .screen.is-clock .vignette, .screen.is-clock .info { opacity: 0; }
   .screen.is-clock .darkbg { opacity: 1; }
   .screen.is-clock .clockface { opacity: 1; }
 
-  .screen.is-night .photo,
-  .screen.is-night .vignette,
-  .screen.is-night .info { opacity: 0; }
+  .screen.is-night .photo, .screen.is-night .vignette, .screen.is-night .info { opacity: 0; }
+  .screen.is-night .darkbg { opacity: 1; }
   .screen.is-night .clockface { opacity: 1; }
   .screen.is-night .clockface .weather { opacity: 0; }  /* 야간: 시계만 (§10-4) */
 </style>
@@ -149,16 +155,15 @@
   <div class="stage-head">
     <h1>Cozy Buddy · 앰비언트 <small>1280 × 800 — 설계서 §2-3 · §10-5</small></h1>
     <div class="mode-switch" role="group" aria-label="화면 모드">
-      <button id="btn-clock" aria-pressed="true">시계 (1세대 스타일)</button>
+      <button id="btn-clock" aria-pressed="true">플립 시계</button>
       <button id="btn-photo" aria-pressed="false">포토 프레임</button>
       <button id="btn-night" aria-pressed="false">야간 디밍</button>
     </div>
   </div>
 
-  <div class="screen is-clock" id="screen">
+  <div class="screen is-clock" id="screen" title="화면을 클릭하면 플립 애니메이션 미리보기">
     <div class="photo">
       <div class="haze"></div>
-      <!-- 산 능선 실루엣 (사진 자리표시) -->
       <svg viewBox="0 0 1280 370" preserveAspectRatio="none" aria-hidden="true">
         <polygon points="0,205 150,130 300,190 430,95 560,175 640,140 760,210 900,120 1030,185 1160,150 1280,200 1280,370 0,370"
                  fill="#2c3550" opacity="0.85"/>
@@ -170,7 +175,6 @@
     </div>
     <div class="vignette"></div>
     <div class="darkbg"></div>
-    <div class="night"></div>
 
     <div class="statusbar ink" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
@@ -183,10 +187,10 @@
       </svg>
     </div>
 
-    <!-- 포토 프레임: 좌하단 정보 스택 (날짜 → 시계 → 날씨) -->
+    <!-- 포토 프레임: 좌하단 (날짜 → 시계 → 날씨) -->
     <div class="info ink">
       <div class="date js-date">7월 16일 수요일</div>
-      <div class="time js-time">7:42</div>
+      <div class="time js-timetext">00:00</div>
       <div class="weather">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
           <circle cx="11" cy="11" r="4"/>
@@ -197,9 +201,11 @@
       </div>
     </div>
 
-    <!-- 시계 모드 (1세대 스타일 — 검은 배경 중앙 대형) -->
+    <!-- 플립 시계 (Nest Hub "Flip" 페이스 다크 변형) -->
     <div class="clockface ink">
-      <div class="time js-time">7:42</div>
+      <div class="flipclock" id="flipclock" aria-label="현재 시각">
+        <!-- 숫자 카드는 JS가 생성 -->
+      </div>
       <div class="date js-date">7월 16일 수요일</div>
       <div class="weather">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
@@ -212,19 +218,20 @@
   </div>
 
   <p class="stage-note">
-    <b>시계(기본)</b>: Nest Hub 1세대 감성 — 검은 배경에 초경량 디지털 시계 중앙 배치,
-    아래로 날짜·날씨를 낮은 명도로. <b>포토 프레임</b>: 2세대 홈 화면 레이아웃 — 좌하단
-    날짜·시계·날씨 스택 + 전면 사진(목업은 CSS 풍경 자리표시, 실제 앱은 로컬/NAS 사진 — §2-3).
-    <b>야간 디밍</b>: 시계 모드에서 한 단계 더 — 날씨도 끄고 시계만 저휘도 웜 그레이
-    (§10-4 번인 대책). 시계는 실시간입니다.
+    <b>플립 시계(기본)</b>: Nest Hub "Flip" 페이스 다크 변형 — 24시간 <b>00:00</b> 고정
+    포맷이라 자릿수 변화 없이 항상 정중앙. 분이 바뀔 때 카드가 절반씩 꺾여 넘어가는
+    스플릿-플랩 애니메이션(<b>화면 클릭으로 미리보기</b>). <b>포토 프레임</b>: 2세대 홈 화면
+    레이아웃(좌하단 스택 + 전면 사진 — 목업은 CSS 자리표시). <b>야간 디밍</b>: 카드·시계
+    휘도만 낮추고 날씨는 소등(§10-4). Compose 구현 시 플립은 digit별
+    graphicsLayer.rotationX로 동일하게 재현합니다.
   </p>
 </div>
 
 <script>
   const screen = document.getElementById("screen");
   const buttons = {
-    photo: document.getElementById("btn-photo"),
     clock: document.getElementById("btn-clock"),
+    photo: document.getElementById("btn-photo"),
     night: document.getElementById("btn-night"),
   };
   function setMode(mode) {
@@ -234,20 +241,118 @@
       button.setAttribute("aria-pressed", String(name === mode));
     }
   }
-  buttons.photo.addEventListener("click", () => setMode("photo"));
   buttons.clock.addEventListener("click", () => setMode("clock"));
+  buttons.photo.addEventListener("click", () => setMode("photo"));
   buttons.night.addEventListener("click", () => setMode("night"));
 
-  const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-  function tick() {
-    const now = new Date();
-    const h = now.getHours();
-    const displayHour = h % 12 === 0 ? 12 : h % 12;
-    const time = displayHour + ":" + String(now.getMinutes()).padStart(2, "0");
-    const date = (now.getMonth() + 1) + "월 " + now.getDate() + "일 " + WEEKDAYS[now.getDay()] + "요일";
-    for (const el of document.querySelectorAll(".js-time")) el.textContent = time;
-    for (const el of document.querySelectorAll(".js-date")) el.textContent = date;
+  /* ── 스플릿-플랩 디지트 ─────────────────────────────────────── */
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const flipclock = document.getElementById("flipclock");
+
+  function makeHalf(kind, value, isFlap) {
+    const el = document.createElement("div");
+    el.className = (isFlap ? "fd-flap " : "fd-half ") + kind;
+    const span = document.createElement("span");
+    span.textContent = value;
+    el.appendChild(span);
+    return el;
   }
-  tick();
+
+  function makeDigit() {
+    const fd = document.createElement("div");
+    fd.className = "fd";
+    fd.dataset.digit = "0";
+    fd.append(makeHalf("top", "0", false), makeHalf("bottom", "0", false));
+    const seam = document.createElement("div");
+    seam.className = "fd-seam";
+    fd.appendChild(seam);
+    return fd;
+  }
+
+  function makeColon() {
+    const colon = document.createElement("div");
+    colon.className = "colon";
+    colon.innerHTML = "<i></i><i></i>";
+    return colon;
+  }
+
+  const digits = [makeDigit(), makeDigit(), makeDigit(), makeDigit()];
+  flipclock.append(digits[0], digits[1], makeColon(), digits[2], digits[3]);
+
+  let animating = 0;
+  function flipTo(fd, next, force = false) {
+    const current = fd.dataset.digit;
+    if (current === next && !force) return;
+    const topSpan = fd.querySelector(".fd-half.top span");
+    const bottomSpan = fd.querySelector(".fd-half.bottom span");
+    fd.dataset.digit = next;
+    if (reducedMotion) {
+      topSpan.textContent = next;
+      bottomSpan.textContent = next;
+      return;
+    }
+    animating += 1;
+    const flapTop = makeHalf("top", current, true);      // 떨어지는 구 값
+    const flapBottom = makeHalf("bottom", next, true);   // 올라와 닫히는 새 값
+    fd.append(flapTop, flapBottom);
+    topSpan.textContent = next;  // 상단 정적은 새 값 (플랩이 걷히며 드러남)
+    flapTop.animate(
+      [{ transform: "rotateX(0deg)" }, { transform: "rotateX(-90deg)" }],
+      { duration: 150, easing: "ease-in", fill: "forwards" }
+    ).finished.then(() => {
+      flapTop.remove();
+      return flapBottom.animate(
+        [{ transform: "rotateX(90deg)" }, { transform: "rotateX(0deg)" }],
+        { duration: 180, easing: "cubic-bezier(.2,.9,.3,1.12)", fill: "forwards" }
+      ).finished;
+    }).then(() => {
+      bottomSpan.textContent = next;
+      flapBottom.remove();
+      animating -= 1;
+    });
+  }
+
+  const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+  let introDone = false;
+
+  function nowParts() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    return { now, hh, mm };
+  }
+
+  function updateTexts() {
+    const { now, hh, mm } = nowParts();
+    const date = (now.getMonth() + 1) + "월 " + now.getDate() + "일 " + WEEKDAYS[now.getDay()] + "요일";
+    for (const el of document.querySelectorAll(".js-date")) el.textContent = date;
+    for (const el of document.querySelectorAll(".js-timetext")) el.textContent = hh + ":" + mm;
+  }
+
+  function tick() {
+    updateTexts();
+    if (!introDone) return;  // 인트로 캐스케이드가 끝나기 전엔 플립 갱신 보류
+    const { hh, mm } = nowParts();
+    const values = [hh[0], hh[1], mm[0], mm[1]];
+    digits.forEach((fd, i) => flipTo(fd, values[i]));
+  }
+
+  // 최초 진입: 00:00 → 현재 시각으로 자릿수 캐스케이드 플립
+  updateTexts();
+  setTimeout(() => {
+    const { hh, mm } = nowParts();
+    [hh[0], hh[1], mm[0], mm[1]].forEach((value, i) => {
+      setTimeout(() => flipTo(digits[i], value, true), i * 110);
+    });
+    setTimeout(() => { introDone = true; }, 4 * 110 + 400);
+  }, 400);
   setInterval(tick, 1000);
+
+  // 화면 클릭 → 플립 애니메이션 미리보기 (전 자릿수 강제 재플립)
+  screen.addEventListener("click", () => {
+    if (animating > 0 || !screen.classList.contains("is-clock") && !screen.classList.contains("is-night")) return;
+    digits.forEach((fd, i) => {
+      setTimeout(() => flipTo(fd, fd.dataset.digit, true), i * 110);
+    });
+  });
 </script>
