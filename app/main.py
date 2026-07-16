@@ -15,6 +15,8 @@ from app import domain
 from app.config import get_settings
 from app.core.logging import setup_logging
 from app.core.models_loader import import_all_models
+from app.core.scheduler import shutdown_scheduler, start_scheduler
+from app.core.tools_loader import import_all_tools
 from app.domain.llm.factory import available_llm_providers
 from app.middleware.error_handler import register_exception_handlers
 from app.middleware.request_logger import register_request_logger
@@ -31,11 +33,12 @@ def _import_domain_module(name: str):
 
 def _register_domain_routers(app: FastAPI) -> None:
     for module_info in pkgutil.iter_modules(domain.__path__):
-        # REST: domain/<name>/api.py → /api/<name> 프리픽스
+        # REST: domain/<name>/api.py → /api/<name> (모듈 PREFIX로 오버라이드 — §5-2 복수형)
         module = _import_domain_module(f"app.domain.{module_info.name}.api")
         if module is not None and getattr(module, "router", None) is not None:
-            app.include_router(module.router, prefix=f"/api/{module_info.name}")
-            logger.info("router mounted: /api/{}", module_info.name)
+            prefix = getattr(module, "PREFIX", f"/api/{module_info.name}")
+            app.include_router(module.router, prefix=prefix)
+            logger.info("router mounted: {}", prefix)
         # WS: domain/<name>/ws.py → 프리픽스 없음 (경로는 모듈이 소유 — §5 /ws/hub)
         ws_module = _import_domain_module(f"app.domain.{module_info.name}.ws")
         if ws_module is not None and getattr(ws_module, "router", None) is not None:
@@ -47,9 +50,20 @@ def _register_domain_routers(app: FastAPI) -> None:
 async def lifespan(app: FastAPI):
     settings = get_settings()
     import_all_models()
+    import_all_tools()  # 도메인 LLM tool 등록 (§7-2)
+    start_scheduler()
+    try:
+        # 시나리오/타이머 잡 복원 — 재시작 내구성 (§9-2)
+        from app.domain.scenario.service import sync_all_schedules
+        from app.domain.timer.service import reschedule_all
+
+        await sync_all_schedules()
+        await reschedule_all()
+    except Exception as exc:  # DB 미준비 등 — 기동 자체는 막지 않는다
+        logger.warning("schedule restore skipped: {}", exc)
     logger.info("{} starting (debug={})", settings.app_name, settings.debug)
-    # Phase 1: STT/TTS provider warm-up이 여기 추가된다 (cold load 회피 — §13-2)
     yield
+    shutdown_scheduler()
     logger.info("{} shutting down", settings.app_name)
 
 

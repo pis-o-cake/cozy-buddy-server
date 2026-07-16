@@ -19,7 +19,7 @@ _HUB = HubContext(hub_id="test-01", room="living")
 def _tool_registry_with_echo() -> tuple[ToolRegistry, list[dict]]:
     calls: list[dict] = []
 
-    async def handler(arguments: dict) -> str:
+    async def handler(arguments: dict, ctx) -> str:
         calls.append(arguments)
         return json.dumps({"ok": True})
 

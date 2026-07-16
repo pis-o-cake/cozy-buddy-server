@@ -26,5 +26,22 @@ class HubConnectionManager:
     def connected_hub_ids(self) -> list[str]:
         return sorted(self._connections)
 
+    async def send_to(self, hub_id: str, payload: dict) -> bool:
+        """특정 허브로 서버 발신 push (§5-1 timer.fired·broadcast 등). 미연결이면 False."""
+        websocket = self._connections.get(hub_id)
+        if websocket is None:
+            return False
+        try:
+            await websocket.send_json(payload)
+            return True
+        except Exception as exc:
+            logger.warning("push to hub {} failed: {}", hub_id, exc)
+            return False
+
+    async def broadcast_all(self, payload: dict) -> None:
+        """전 허브 push — device.state_changed 대시보드 실시간 갱신용 (§5-1)."""
+        for hub_id in list(self._connections):
+            await self.send_to(hub_id, payload)
+
 
 hub_manager = HubConnectionManager()

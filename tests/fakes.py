@@ -5,6 +5,15 @@ from collections.abc import AsyncIterator
 from typing import ClassVar
 
 from app.config import Settings
+from app.domain.device.adapters.base import (
+    CommandResult,
+    DeviceAdapter,
+    DeviceCommand,
+    DeviceState,
+    DiscoveredDevice,
+    adapter_registry,
+)
+from app.domain.device.models import Device
 from app.domain.llm.providers.base import (
     ChatDelta,
     Done,
@@ -94,6 +103,45 @@ class FakeSTT(STTProvider):
 
     async def shutdown(self) -> None:
         pass
+
+
+@adapter_registry.register("fakeadp")
+class FakeDeviceAdapter(DeviceAdapter):
+    """execute 결과를 기록하고, fail_times만큼 실패를 시뮬레이션한다."""
+
+    adapter_type: ClassVar[str] = "fakeadp"
+    fail_times: ClassVar[int] = 0
+    executed: ClassVar[list[tuple[str, str, object]]] = []
+
+    @classmethod
+    def reset(cls) -> None:
+        cls.fail_times = 0
+        cls.executed = []
+
+    async def discover(self) -> list[DiscoveredDevice]:
+        return [
+            DiscoveredDevice(
+                adapter_type="fakeadp",
+                name="발견된 플러그",
+                model="FAKE-1",
+                config={"host": "10.0.0.9"},
+                suggested_type="plug",
+            )
+        ]
+
+    async def identify(self, device: Device) -> None:
+        type(self).executed.append((device.name, "identify", None))
+
+    async def get_state(self, device: Device) -> DeviceState:
+        return DeviceState(online=True, attributes={"on_off": "on"})
+
+    async def execute(self, device: Device, command: DeviceCommand) -> CommandResult:
+        cls = type(self)
+        cls.executed.append((device.name, command.capability, command.value))
+        if cls.fail_times > 0:
+            cls.fail_times -= 1
+            return CommandResult(ok=False, detail="simulated failure")
+        return CommandResult(ok=True)
 
 
 @tts_registry.register("fake")

@@ -15,7 +15,9 @@ from loguru import logger
 from app.config import get_settings
 from app.core.database import get_session_factory
 from app.core.i18n import t
+from app.core.websocket import hub_manager
 from app.domain.chat import service as chat_service
+from app.domain.device import service as device_service
 from app.domain.llm.providers.base import Message
 from app.domain.llm.service import (
     HubContext,
@@ -24,12 +26,44 @@ from app.domain.llm.service import (
     OrchTextDelta,
     OrchToolStatus,
 )
+from app.domain.scenario import service as scenario_service
 from app.domain.voice import runtime
 from app.domain.voice.sentence import SentenceSplitter
 
 UPLINK_AUDIO_TAG = 0x01  # 허브→서버 마이크 PCM (§5-1)
 DOWNLINK_TTS_TAG = 0x02  # 서버→허브 TTS PCM (§5-1)
 _MAX_UTTERANCE_BYTES = 16000 * 2 * 20  # 16kHz PCM16 20초 상한 (§4 maxUtteranceMs 방어)
+
+
+async def announce(hub_id: str, text: str) -> bool:
+    """서버 발신 방송 (§5-1 broadcast) — 시나리오 tts_announce·인터콤 공용.
+
+    대상 허브에 broadcast 메시지 + TTS 오디오(0x02)를 push한다. 미연결이면 False.
+    """
+    websocket = hub_manager.get(hub_id)
+    if websocket is None:
+        return False
+    await hub_manager.send_to(hub_id, {"type": "broadcast", "from_hub": "server", "text": text})
+    try:
+        tts = await runtime.get_tts()
+        started = False
+        async for chunk in tts.synthesize_stream(text):
+            if not started:
+                start_msg = {
+                    "type": "tts.start",
+                    "session_id": "",
+                    "codec": "pcm16",
+                    "rate": chunk.rate,
+                }
+                await hub_manager.send_to(hub_id, start_msg)
+                started = True
+            await websocket.send_bytes(bytes([DOWNLINK_TTS_TAG]) + chunk.pcm)
+        if started:
+            await hub_manager.send_to(hub_id, {"type": "tts.end", "session_id": ""})
+    except Exception as exc:
+        # 오디오 실패 시 텍스트 broadcast만으로 폴백 (§12-1)
+        logger.warning("announce tts failed: {}", exc)
+    return True
 
 
 class VoiceSessionHandler:
@@ -143,11 +177,18 @@ class VoiceSessionHandler:
                 )
             await self._send({"type": "state", "value": "thinking"})
 
-            # 2) 세션 컨텍스트 (§7-4)
+            # 2) 세션 컨텍스트(§7-4) + 기기/시나리오 프롬프트 블록(§7-1 블록4 — 매 턴 DB에서
+            #    새로 조립하므로 등록 즉시 반영, §8-2)
             session_factory = get_session_factory()
             async with session_factory() as db:
                 chat_session = await chat_service.get_or_create_session(db, self._hub_pk)
                 history, summary = await chat_service.load_context(db, chat_session)
+                devices_block = await device_service.prompt_block(db)
+                scenario_names = await scenario_service.enabled_names(db)
+            if scenario_names:
+                prefix = devices_block or t("prompt.no_devices")
+                names = ", ".join(scenario_names)
+                devices_block = f"{prefix}\n{t('prompt.scenarios_prefix')}: {names}"
 
             # 3) LLM tool loop + 문장 단위 TTS (§4 · §7-3)
             llm = runtime.get_llm()
@@ -158,7 +199,11 @@ class VoiceSessionHandler:
             done: OrchDone | None = None
 
             async for event in orchestrator.run_turn(
-                [*history, user_message], self._hub, summary=summary, request_id=self._request_id
+                [*history, user_message],
+                self._hub,
+                summary=summary,
+                devices_block=devices_block,
+                request_id=self._request_id,
             ):
                 if self._cancel.is_set():
                     break

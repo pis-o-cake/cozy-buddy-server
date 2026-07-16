@@ -42,8 +42,10 @@ class Settings(BaseSettings):
     tts_voice: str = "M1"
     llm_first_token_timeout_seconds: float = 10.0  # LLM 타임아웃 → 폴백 응답 (§12-1)
 
-    # ── IoT (§8-1 — 구현은 Phase 2) ──
+    # ── IoT (§8-1) ──
     iot_adapters: str = "kasa,matter"
+    kasa_username: str = ""  # Tapo 기기 로컬 핸드셰이크용 계정 (Kasa 구형은 불필요)
+    kasa_password: str = ""
 
 
 @lru_cache

@@ -17,6 +17,7 @@ dependencies = [
     "pyjwt>=2.9",
     "httpx>=0.27",
     "anthropic>=0.40",
+    "apscheduler>=3.10,<4",
 ]
 
 [project.optional-dependencies]
@@ -25,6 +26,10 @@ voice = [
     "faster-whisper>=1.1",
     "supertonic>=1.0",
     "numpy>=2.0",
+]
+# 실 IoT 제어 — 테스트는 fake adapter로 대체 가능
+iot = [
+    "python-kasa>=0.10",
 ]
 dev = [
     "pytest>=8.3",

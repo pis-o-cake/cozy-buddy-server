@@ -25,7 +25,7 @@ from app.domain.llm.providers.base import (
     ToolCall,
     ToolCallDelta,
 )
-from app.domain.llm.tools.registry import ToolRegistry, tool_registry
+from app.domain.llm.tools.registry import ToolContext, ToolRegistry, tool_registry
 
 MAX_TOOL_ITERATIONS = 5  # §7-3
 
@@ -92,6 +92,7 @@ class Orchestrator:
         hub: HubContext,
         *,
         summary: str | None = None,
+        devices_block: str | None = None,
         request_id: str | None = None,
     ) -> AsyncIterator[OrchEvent]:
         """history(마지막이 사용자 발화) 기준으로 응답을 스트리밍한다.
@@ -100,10 +101,9 @@ class Orchestrator:
             OrchTextDelta(자막 스트리밍) / OrchToolStatus / OrchDone(최종 — 반드시 마지막).
         """
         settings = get_settings()
-        messages = [
-            Message(role="system", content=build_system_prompt(hub, summary=summary)),
-            *history,
-        ]
+        system_prompt = build_system_prompt(hub, devices_block=devices_block, summary=summary)
+        messages = [Message(role="system", content=system_prompt), *history]
+        tool_ctx = ToolContext(hub_id=hub.hub_id, room=hub.room)
         new_messages: list[Message] = []
         full_text: list[str] = []
 
@@ -171,7 +171,7 @@ class Orchestrator:
 
             for call in calls:
                 yield OrchToolStatus(tool=call.name, status="running")
-                result = await self._tools.execute(call.name, call.arguments)
+                result = await self._tools.execute(call.name, call.arguments, tool_ctx)
                 yield OrchToolStatus(tool=call.name, status="ok" if result.ok else "failed")
                 tool_message = Message(role="tool", content=result.content, tool_call_id=call.id)
                 messages.append(tool_message)

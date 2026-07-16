@@ -13,7 +13,16 @@ from loguru import logger
 
 from app.domain.llm.providers.base import ToolSchema
 
-ToolHandler = Callable[[dict[str, Any]], Awaitable[str]]
+
+@dataclass
+class ToolContext:
+    """tool 실행 시 주입되는 발화 컨텍스트 (room-aware 해석의 기준 — §8-3)."""
+
+    hub_id: str = ""
+    room: str | None = None
+
+
+ToolHandler = Callable[[dict[str, Any], ToolContext], Awaitable[str]]
 
 
 @dataclass
@@ -40,7 +49,9 @@ class ToolRegistry:
     def schemas(self) -> list[ToolSchema]:
         return list(self._schemas.values())
 
-    async def execute(self, name: str, arguments_json: str) -> ToolResult:
+    async def execute(
+        self, name: str, arguments_json: str, ctx: ToolContext | None = None
+    ) -> ToolResult:
         """tool을 실행한다. 모든 실패는 모델이 읽는 오류 결과로 변환 (§7-3)."""
         handler = self._handlers.get(name)
         if handler is None:
@@ -50,7 +61,7 @@ class ToolRegistry:
         except json.JSONDecodeError as exc:
             return ToolResult(ok=False, content=json.dumps({"error": f"invalid arguments: {exc}"}))
         try:
-            return ToolResult(ok=True, content=await handler(arguments))
+            return ToolResult(ok=True, content=await handler(arguments, ctx or ToolContext()))
         except Exception as exc:  # tool 실패가 파이프라인을 죽이면 안 된다
             logger.exception("tool execution failed: {}", name)
             return ToolResult(ok=False, content=json.dumps({"error": str(exc)}))
